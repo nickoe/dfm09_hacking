@@ -1,0 +1,12 @@
+
+Hmm, it looks like the SWDIO and SWCLK is on the smt non populated  header near the gps
+
+Some random references to the DFM09 on the internet
+
+http://radiosonde.eu/RS00-D/RS03J09-D.html
+http://happysat.nl/DFM-09/DFM09.html
+http://zauberkopf.com/20130725_umbau_dfm6/
+
+Potential firmware:
+
+https://github.com/oe5hpm/dxlAPRS

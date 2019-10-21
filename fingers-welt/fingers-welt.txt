@@ -1,0 +1,93 @@
+https://www.fingers-welt.de/phpBB/viewtopic.php?f=14&t=43&start=1525#p129889
+von Taucher » Fr 18. Mär 2016, 12:15
+
+Baummarder hat geschrieben:
+Bei der alten DFM-Software war ja bekannt, wo der Killtimer sich versteckt,
+hier bei der neuen DFM-Software darf man erst wieder intensiv suchen!
+Noch schlimmer: FLASH ist nun read-protected.
+
+Habe die DFM09 etwas reverse-engineered - hier schonmal einige der gewonnenen Infos:
+Unten am Rand der DFM ist ein PCB-Edge Stecker - der hat auf beiden Seiten jeweils 9 Felder - der Stecker ist EINSEITIG und kann beliebig gedreht werden da die Rückseite die gleichen Felder in gleicher Reihenfolge hat.
+
+STECKERBELEGUNG DFM-09
+Pinout von links nach rechts wenn man von der Steckerseite auf den Stecker schaut (GPS-Antenne schaut weg vom Betrachter):
+1 [ECKIGES PAD] - Status/Speisung Spannungsregler - geht auf Input vom LM2991 Negativ-Spannungsregler bzw. gibt Information ob der Betriebsschalter aktiviert wurde.
+Die Batterie wird durch eine Diode vor Aufladung geschützt, man kann die Sonde also über diesen Pin mit Spannung versorgen
+2 - Virtual GND = Ausgangsspannung des LM2991 (-3,1V relativ zu Batterie +) WICHTIG :)
+3 - NC - Leer/Nicht angeschlossen (Pin für Sicherheitsabstand zur GND-Rail) - ACHTUNG: BEI DFM06 ist dieser Pin noch belegt!
+4 - OUTPUT - Batterie-Minuspol (geschaltet) - erlaubt die Erkennung der Batteriespannung und erlaubt Information ob der Betriebsschalter aktiviert wurde - nicht mit Spannung beaufschlagen!
+5 - OUTPUT - SERIAL - An CPU STM32F100 - USART1_TX (für Kommunikation mit 100kOhm an Pin 9 verbinden!) - 3,3V Logic
+6 - INPUT - BOOT - Auf "HI" legen (an Pin9/VCC) um den STM32F100 Bootloadermodus zu aktivieren (BOOT1 ist auf der Platine fest auf LOW gelegt)
+7 - INPUT - SERIAL - An CPU STM32F100 - USART1_RX (für Kommunikation ebenfalls mit 100kOhm an Pin 9 verbinden!) - 3,3V Logic
+8 - NC - Leer/Nicht angeschlossen (Pin für Sicherheitsabstand zur V+-Rail) - ACHTUNG: BEI DFM06 ist dieser Pin noch belegt!
+9 - VCC/Batterie+ (direkt verbunden) - entspricht der positiven Rail - ist auch gleichzeitig Masse-Fill (mit Ausnahme des GPS-Funkmoduls, dort ist Virtual GND Massefill)
+
+Memo zum Thema Plus, Minus, GND usw:
+Die Batterie ist so verschaltet, dass die NEGATIVSEITE geregelt wird - da die ganze Platine jedoch elektrisch gesehen schwebend ist, kann man Serial-GND mit Pin 2 verbinden und hat dann 3,1V zu Pin9/VCC - auch wenn zwischen Pin 1 und Pin 9 die volle Batteriespannung anliegt - Pin1 ist dann quasi unter Pin2.
+
+PINOUT GPS-HEADER
+Oben in der Sonde findet sich zudem beim TELIT-JN3-GPS-Modul ein winziger 4-er Header ohne Pins (nur Löcher) - nicht mit dem größeren Header etwas weiter zur Flexplatine verwechseln!
+Das eckige Lötpad ist Pin 1
+1 - GND
+2 - TX vom GPS-Modul
+3 - RX vom GPS-Modul
+4 - VCC (am besten gar nicht anschließen - unnötig)
+
+Der 1 Puls pro Sekunde Pin vom Telit-Modul geht auf eine LED neben dem Modul und zeigt somit den GPS-Status an.
+
+
+Und hier noch die Kommunikation mit dem Bootloader...
+
+Each packet is either accepted (ACK answer) or discarded (NACK answer):
+• ACK = 0x79
+• NACK = 0x1F
+---------------------------------------------------------------------------
+INIT (SERIAL SPEED DETECTION)
+<-Send    7F
+Receive-> 79 (ACK) - Baudrate Detected
+
+---------------------------------------------------------------------------
+<-Send 	00 FF (Gets the version and the allowed commands supported by the current version of the bootloader )
+Receive-> 79 0B 22 00 01 02 11 21 31 43 63 73 82 92 79
+          1  2  3  4  5  6  7  8  9  10 11 12 13 14 15
+Byte 1:	ACK
+Byte 2:	N = 11 = the number of bytes to follow – 1 except current and ACKs.
+Byte 3:	Bootloader version (0 < Version < 255), example: 0x10 = Version 1.0
+Byte 4:	0x00	–Get command
+Byte 5:	0x01	–Get Version and Read Protection Status
+Byte 6:	0x02	–Get ID
+Byte 7:	0x11	–Read Memory command
+Byte 8:	0x21	–Go command
+Byte 9:	0x31	–Write Memory command
+Byte 10:0x43 	–Erase command 	or 0x44 = Extended Erase command (these commands are exlusive)
+Byte 11:0x63	–Write Protect command
+Byte 12:0x73	–Write Unprotect command
+Byte 13:0x82	–Readout Protect command
+Byte 14:0x92	–Readout Unprotect command
+Last byte (15):	ACK
+
+---------------------------------------------------------------------------
+<-Send 01 FE (Gets the bootloader version and the Read Protection status of the Flash memory)
+Receive-> 79 22 00 00 79
+Byte 1: ACK
+Byte 2: Bootloader version (0 < Version ≤ 255), example: 0x10 = Version 1.0
+Byte 3: Option byte 1: 0x00 to keep the compatibility with generic bootloader protocol
+Byte 4: Option byte 2: 0x00 to keep the compatibility with generic bootloader protocol
+Byte 5: ACK
+
+---------------------------------------------------------------------------
+<-Send 02 FD (Gets the chip ID)
+Receive-> 79 01 04 20 79
+Byte  1: ACK
+Byte  2: N = the number of bytes – 1 (N = 1 for STM32), except for current byte and ACKs.
+Byte3-4: PID(1) byte 3 = 0x04, byte 4 = 0xXX
+Byte  5: ACK
+
+---------------------------------------------------------------------------
+<-Send 11 EE (Read memory init command)
+Receive-> 1F (NACK = memory is read protected)
+----------------------------------------------------------------------------
+
+Wozu ich jedoch (noch) nichts finden konnte war der Chip "S04E P3NS02" direkt neben der CPU - ich tippe auf ein Serial EEPROM
+EDIT: Habs glaub: ON Semiconductor - CAT25040YI−G - SPI Serial CMOS EEPROM :)
+Zwischen CPU und dem IC sind 4 GPIOs verlegt

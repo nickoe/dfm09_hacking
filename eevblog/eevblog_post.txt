@@ -1,0 +1,62 @@
+Source: https://www.eevblog.com/forum/blog/eevblog-1207-arm-dev-boards-falling-from-the-sky!/msg2382357/#msg2382357
+Date: Reply #6 on: May 02, 2019, 07:11:14 am
+Author: thieringpeti
+
+My GRAW DFM-09 teardown with schematics, and a bit sniffing around the UART protocol of the sonde, made a simple app in MinGW, if one wants to read the sonde by UART.
+
+Most important parts datasheets:
+
+CPU: STM32F100-C8T6B (http://www.st.com/content/ccc/resource/technical/document/datasheet/dd/87/fd/2a/fb/3f/48/5c/CD00251732.pdf/files/CD00251732.pdf/jcr:content/translations/en.CD00251732.pdf)
+EEPROM: CAT25010 (http://www.onsemi.com/pub_link/Collateral/CAT25010-D.PDF)
+Small 2-way multiplexers: NC7SZ157 (https://www.fairchildsemi.com/datasheets/NC/NC7SZ157.pdf)
+Diodes for 1.8V power: BAT54SS3 (dual schottky-diodes) http://ftp01.cystekec.com/BAT54S3.pdf)
+Humidity sensor FET's: BFR31 (http://www.nxp.com/documents/data_sheet/BFR30-31.pdf)
+PLL: MB15E03SL PLL Synthesizer (http://www.es.co.th/Schemetic/PDF/MB15E03SL-FUJITSU.PDF)
+Radio PA transistor: BFP450 (http://www.infineon.com/dgdl/Infineon-BFP450-DS-v01_02-en.pdf?fileId=db3a30431400ef680114275d537d074b)
+VFO oscillator: BGA416 (http://www.infineon.com/dgdl/Infineon-BGA416-DS-v02_01-en.pdf?fileId=db3a304314dca389011541880d641635)
+Humidity sensor: http://downloads.epluse.com/fileadmin/data/product/hc103m2/datasheet_HC103M2.pdf
+
+UART is 57600-8-N-1
+
+Code: [Select]
+
+Command, cheksum format is always REVERSE BYTE ORDER! (for example, 0x0004 offset is 04 00, 0x0193 is 93 01)
+
+A0 A2 [2-byte CMD] [2-byte OFFSET] [DATA BLOB] [2-byte checksum] B0 B3
+
+CMD list:
+
+0x0399 (99 03): prints 4 bytes of version info. (reverse byte order). Depends on the batch of the sonde. For my ones, 70207 or 70107 or 70301 (?ver 7.2.7, 7.1.7, 7.3.1)
+0x0499 (99 04): writes 4 bytes of serial (reverse byte order). Must be followed by 4 bytes of valid data, or fills the first 2 bytes with random data, and after next boot, the sonde serial changes to a random number.
+0x04AA (AA 04): changes the serial in the RAM. If you don't want to power cycle the sonde after changing the serial...
+0x0599 (99 05): read serial (4 bytes of serial)
+0x1199 (99 11): EEPROM query. (Gives 176 or 208 bytes of EEPROM data in HEX format)
+0x20AA (AA 20): GPSversion. (Prints the NMEA about string of GPS in ASCII format)
+0x0699 / 0x06AA (99 / AA 06): FREQ WRITE. First EEPROM, then RAM. Must be followed by 2 bytes of FREQ data in reverse byte order. The value represents the frequency increment after 400 MHz in 10 KHz steps.
+0x0799 (99 07): Frequency readout.
+
+Other commands giving constant results on all of my sondes:
+
+0x9933 / 0xAA33 always gives a single byte of 0x03
+0x9939 gives a two-byte answer varying on each sonde.
+0xAA19 gives 4 bytes, which is always change (some counter? Some status register?).
+0x992B gives always FFFF.
+0x50AA gives 28 bytes of 00's.
+
+
+messages from sonde
+
+CC 02 02 00 [CMD] [OFFSET] - ACK, succesful write command.
+CC 03 03 00 00 00 [MSG] - error or sonde powerup, common MSG's are 2C,2D,2F,34,36,38
+B4 [CMD] [offset] [BLOB] - queried data from sonde
+
+
+commands can be sent to sonde. First byte: CMD, second byte: Address.
+
+
+99 - eeprom (?)
+AA - RAM or flash (?)
+
+then offset (for freq, 06), byte count 2-byte (for freq, 02 00), then the data, C9-00 for 402.01 MHz (0x00C9 = 201 x 10KHz, reverse byte order 0xC900)
+
+For changing eeprom values (freq, etc), you have to first set the value in eeprom, then in RAM. (or just set EEPROM then reboot sonde).

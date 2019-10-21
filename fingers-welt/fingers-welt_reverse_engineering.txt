@@ -1,0 +1,17 @@
+https://www.fingers-welt.de/phpBB/viewtopic.php?f=14&t=43&start=1550#p131511
+von Taucher » Di 29. Mär 2016, 20:23
+data:
+
+Hier mal meine bisherige DFM09-H Reversing-Ausbeute - habe momentan keine Lust mehr die Schaltung noch weiter auszukundschaften :)
+
+Enthalten sind:
+- Bilder der Hauptplatine mit Pinbelegungen, Signalen und einigen Traces (JPG)
+- Signalpfad und wichtige Pins im RF-Modul (JPG)
+- Schaltplan der Messwertplatine (PDF, fast komplett)
+- Bus-Kommunikation zwischen CPU und Serial-EEPROM und Bit-Mitschnitt des RF-Modul-Inits (XLS)
+
+Über Tipps wie trotz "Readout-Protection" an die Firmware im STM32 zu kommen wäre freue ich mich natürlich weiterhin.
+DATEIANHÄNGE
+DFM09-H-Reverse-Data.zip
+(1.88 MiB) 179-mal heruntergeladen
+Zuletzt geändert von Taucher am Mi 30. Mär 2016, 10:35, insgesamt 2-mal geändert.
