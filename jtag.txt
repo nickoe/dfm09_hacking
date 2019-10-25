@@ -1,0 +1,14 @@
+It looks like the SWD pins are connected to the 10 pin header near the
+GPS module and not on the fingers near the power switch.
+
+From GND pin and against the clock:
+#1 GND                    Purple
+#2 Connected VCC and #3
+#3 Connected to #2
+#4
+#5
+#6 RESET
+#7 PA15 / JTDI
+#8 PB3 / JTDO
+#9 PA14 / JTCP / SWCLK    Green
+#10 PA13 / JTMS / SWDIO   White
