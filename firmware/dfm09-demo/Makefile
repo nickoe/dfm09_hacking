@@ -3,6 +3,7 @@ BUILD_DIR = bin
 
 SHARED_DIR = ../common-code
 CFILES = main.c
+CFILES += clock_setup.c
 
 # TODO - you will need to edit these two lines!
 DEVICE=stm32f100c8t6
