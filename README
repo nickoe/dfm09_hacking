@@ -1,5 +1,14 @@
+Some noes on the DMF09 radiosonde and a bit of firmware for mucking
+around. It uses libopencm3 as a submodule of this project, you can
+close with:
 
-Hmm, it looks like the SWDIO and SWCLK is on the smt non populated  header near the gps
+git clone --recursive https://github.com/nickoe/dfm09_hacking.git
+
+And build firmware with
+
+cd firmware && make
+
+# References
 
 Some random references to the DFM09 on the internet
 
