@@ -1,7 +1,7 @@
+#include "gps.h"
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/usart.h>
-#include "gps.h"
 
 static void delay(int max) {
     int i;
@@ -9,7 +9,6 @@ static void delay(int max) {
         __asm__("nop");
     }
 }
-
 
 static void nmea_setup(void) {
 
@@ -20,7 +19,7 @@ static void nmea_setup(void) {
 
     usart_set_baudrate(USART2, 9600);
     usart_enable(USART2);
-    delay(200000*50);
+    delay(200000 * 50);
     for (int n = 0; n < 32; n++) {
         usart_send_blocking(USART2, sirfbinary2nmea[n]);
     }
@@ -53,4 +52,3 @@ void gps_setup(void) {
 
     nmea_setup();
 }
-

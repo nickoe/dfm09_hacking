@@ -5,6 +5,7 @@ SHARED_DIR = ../common-code
 CFILES = main.c
 CFILES += clock_setup.c
 CFILES += gps.c
+CFILES += usart.c
 
 # TODO - you will need to edit these two lines!
 DEVICE=stm32f100c8t6

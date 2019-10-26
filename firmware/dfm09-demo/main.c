@@ -1,5 +1,6 @@
 #include "clock_setup.h"
 #include "gps.h"
+#include "usart.h"
 #include <errno.h>
 #include <libopencm3/cm3/assert.h>
 #include <libopencm3/stm32/flash.h>
@@ -8,35 +9,11 @@
 #include <libopencm3/stm32/timer.h>
 #include <libopencm3/stm32/usart.h>
 #include <stdio.h>
-int _write(int file, char *ptr, int len);
 
 static void gpio_setup(void) {
     rcc_periph_clock_enable(RCC_GPIOC);
     gpio_set_mode(GPIOC, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,
                   GPIO13);
-
-    // Port A, used for USART
-    rcc_periph_clock_enable(RCC_GPIOA);
-    rcc_periph_clock_enable(RCC_AFIO);
-    rcc_periph_clock_enable(RCC_USART1);
-
-    // Enable USART TX
-    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
-                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO9);
-    // Enable USART RX
-    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
-                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO10);
-    /* Setup UART parameters. */
-    usart_set_baudrate(USART1, 115200);
-    // usart_set_baudrate(USART1, 57600);
-    usart_set_databits(USART1, 8);
-    usart_set_stopbits(USART1, USART_STOPBITS_1);
-    usart_set_parity(USART1, USART_PARITY_NONE);
-    usart_set_flow_control(USART1, USART_FLOWCONTROL_NONE);
-    usart_set_mode(USART1, USART_MODE_TX);
-
-    /* Finally enable the USART. */
-    usart_enable(USART1);
 
     // Modulation output
     gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,
@@ -77,19 +54,6 @@ void delay(int max) {
 #define DELAY_A 200000 / 6
 #define DELAY_B 8000000 / 6
 
-int _write(int file, char *ptr, int len) {
-    int i;
-
-    if (file == 1) {
-        for (i = 0; i < len; i++)
-            usart_send_blocking(USART1, ptr[i]);
-        return i;
-    }
-
-    errno = EIO;
-    return -1;
-}
-
 int main(void) {
     int i;
     // rcc_clock_setup_in_hse_10_24mhz_out_10_24mhz();
@@ -97,6 +61,7 @@ int main(void) {
 
     gpio_setup();
     gps_setup();
+    stdio_setup();
 
     int j = 0;
     int c = 'K';

@@ -1,6 +1,6 @@
+#include "clock_setup.h"
 #include <libopencm3/stm32/flash.h>
 #include <libopencm3/stm32/rcc.h>
-#include "clock_setup.h"
 
 void rcc_clock_setup_in_hse_10_24mhz_out_10_24mhz(void) {
     /* Enable internal high-speed oscillator. */
