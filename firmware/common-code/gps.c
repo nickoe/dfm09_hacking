@@ -30,6 +30,8 @@ static void nmea_setup(void) {
 }
 
 void gps_setup(void) {
+    rcc_periph_clock_enable(RCC_GPIOA);
+    rcc_periph_clock_enable(RCC_AFIO);
     rcc_periph_clock_enable(RCC_USART2);
 
     // Enable USART TX
