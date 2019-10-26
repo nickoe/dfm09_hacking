@@ -1,11 +1,12 @@
+#include "clock_setup.h"
+#include "gps.h"
+#include <errno.h>
 #include <libopencm3/cm3/assert.h>
 #include <libopencm3/stm32/flash.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/timer.h>
 #include <libopencm3/stm32/usart.h>
-#include "clock_setup.h"
-#include <errno.h>
 #include <stdio.h>
 int _write(int file, char *ptr, int len);
 
@@ -36,25 +37,6 @@ static void gpio_setup(void) {
 
     /* Finally enable the USART. */
     usart_enable(USART1);
-
-    rcc_periph_clock_enable(RCC_USART2);
-
-    // Enable USART TX
-    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
-                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO2);
-    // Enable USART RX
-    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
-                  GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO3);
-    /* Setup UART parameters. */
-    usart_set_baudrate(USART2, 9600);
-    usart_set_databits(USART2, 8);
-    usart_set_stopbits(USART2, USART_STOPBITS_1);
-    usart_set_parity(USART2, USART_PARITY_NONE);
-    usart_set_flow_control(USART2, USART_FLOWCONTROL_NONE);
-    usart_set_mode(USART2, USART_MODE_TX_RX);
-
-    /* Finally enable the USART. */
-    usart_enable(USART2);
 
     // Modulation output
     gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,
@@ -112,29 +94,12 @@ int main(void) {
     int i;
     // rcc_clock_setup_in_hse_10_24mhz_out_10_24mhz();
     rcc_clock_setup_in_hse_10_24mhz_out_20_48mhz();
+
     gpio_setup();
-    // stdout = usart_setup(USART1, 115200);
+    gps_setup();
+
     int j = 0;
     int c = 'K';
-    uint8_t sirfbinary2nmea[] = {
-        0xa0, 0xa2, 0x00, 0x18, 0x81, 0x02, 0x01, 0x01, 0x01, 0x01, 0x01,
-        0x01, 0x05, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x00, 0x01,
-        0x00, 0x01, 0x00, 0x01, 0x12, 0xc0, 0x01, 0x6a, 0xb0, 0xb3};
-
-    delay(DELAY_A * 50);
-
-    usart_set_baudrate(USART2, 9600);
-    usart_enable(USART2);
-    for (j = 0; j < 6; j++) {
-        printf(".\n");
-        // delay(DELAY_A*50);
-    }
-    for (int n = 0; n < 32; n++) {
-        usart_send_blocking(USART2, sirfbinary2nmea[n]);
-    }
-    usart_send_blocking(USART2, '\r');
-    usart_send_blocking(USART2, '\n');
-    usart_set_baudrate(USART2, 4800);
 
     while (1) {
 #if 0
@@ -156,7 +121,7 @@ int main(void) {
         c = usart_recv_blocking(USART2);
         printf("%c", c);
         gpio_toggle(GPIOA, GPIO4);
-        //delay(230);
+        // delay(230);
 #endif
     }
 
