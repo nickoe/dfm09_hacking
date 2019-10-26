@@ -1,5 +1,5 @@
 # DFM09 hacking
-Some noes on the DMF09 radiosonde and a bit of firmware for mucking
+Some notes on the DMF09 radiosonde and a bit of firmware for mucking
 around. It uses libopencm3 as a submodule of this project, you can
 clone with:
 
