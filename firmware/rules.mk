@@ -161,7 +161,7 @@ ifeq (,$(OOCD_FILE))
 		$(NULL)
 else
 	$(Q)(echo "halt; program $(realpath $(*).elf) verify reset" | nc -4 localhost 4444 2>/dev/null) || \
-		$(OOCD) -f $(OOCD_FILE) \
+		$(OOCD) -f $(OOCD_FILE) -f target/stm32f1x.cfg \
 		-c "program $(realpath $(*).elf) verify reset exit" \
 		$(NULL)
 endif
