@@ -33,8 +33,7 @@ static void gpio_setup(void) {
     rcc_periph_clock_enable(RCC_TIM4);
     timer_set_mode(TIM4, TIM_CR1_CKD_CK_INT, TIM_CR1_CMS_EDGE, TIM_CR1_DIR_UP);
     timer_set_period(TIM4, 1);
-    timer_set_oc_value(TIM4, TIM_OC4, 1);
-    // timer_disable_preload(TIM4);
+    timer_disable_preload(TIM4);
     timer_continuous_mode(TIM4);
     timer_enable_counter(TIM4);
 
