@@ -28,10 +28,10 @@ typedef union {
 
 static void writer(uint32_t input) {
     // Clock (PA5)
-    // Data (PB0)
+    // Data (PA7)
     // LE (PB2)
     gpio_clear(GPIOA, GPIO5);
-    gpio_clear(GPIOB, GPIO0);
+    gpio_clear(GPIOA, GPIO7);
     gpio_clear(GPIOB, GPIO2);
 
 #define NOF_BITS 19
@@ -53,11 +53,11 @@ static void writer(uint32_t input) {
 
             /* Set SDATA */
             if (byte & 0x01) {
-                gpio_set(GPIOB, GPIO0);
+                gpio_set(GPIOA, GPIO7);
                 printf("1");
             }
             else {
-                gpio_clear(GPIOB, GPIO0);
+                gpio_clear(GPIOA, GPIO7);
                 printf("0");
             }
 
@@ -85,9 +85,7 @@ static void writer(uint32_t input) {
     gpio_clear(GPIOB, GPIO0);
 
     gpio_set(GPIOB, GPIO2);
-    gpio_set(GPIOB, GPIO0);
     NOP_DELAY();
-    gpio_clear(GPIOB, GPIO0);
     gpio_clear(GPIOB, GPIO2);
     NOP_DELAY();
 }
@@ -205,9 +203,9 @@ void pll_setup(void) {
     // Clock (PA5)
     gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,
                   GPIO5);
-    // Data (PB0)
-    gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,
-                  GPIO0);
+    // Data (PA7)
+    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,
+                  GPIO7);
     // LE (PB2)
     gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,
                   GPIO2);
@@ -215,6 +213,6 @@ void pll_setup(void) {
     gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO15);
 
     gpio_clear(GPIOA, GPIO5);
-    gpio_clear(GPIOB, GPIO0);
+    gpio_clear(GPIOA, GPIO7);
     gpio_clear(GPIOB, GPIO2);
 }

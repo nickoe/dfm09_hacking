@@ -87,14 +87,14 @@ int main(void) {
         //gpio_toggle(GPIOA, GPIO4);
         // delay(230);
 #endif
-#if 0
-        for ( i =0 ; i < 10000000; i++) {
+#if 1
+        for ( i =0 ; i < 6; i++) {
             gpio_toggle(GPIOA, GPIO4);
         }
 #endif
         pll_write();
         delay(10000000);
-        //delay(10000);
+        delay(10000);
     }
 
     return 0;
