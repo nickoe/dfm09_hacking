@@ -6,6 +6,7 @@ CFILES = main.c
 CFILES += clock_setup.c
 CFILES += gps.c
 CFILES += usart.c
+CFILES += mb15e03sl.c
 
 # TODO - you will need to edit these two lines!
 DEVICE=stm32f100c8t6
