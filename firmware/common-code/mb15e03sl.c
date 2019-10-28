@@ -99,10 +99,10 @@ static void writer(uint32_t input) {
 		//spi_send_lsb_first(SPI1);
 
 		uint8_t data[4];
-		data[0] = input & 0x000000FF;
-		data[1] = (input & 0x0000FF00) >> 8;
-		data[2] = (input & 0x00FF0000) >> 16;
-		data[3] = (input & 0xFF000000) >> 24;
+		data[3] = input & 0x000000FF;
+		data[2] = (input & 0x0000FF00) >> 8;
+		data[1] = (input & 0x00FF0000) >> 16;
+		data[0] = (input & 0xFF000000) >> 24;
 
     //printf("Tried to send: 0x");
     for (int i = 0; i <= 3; i++) {
@@ -294,7 +294,7 @@ void pll_setup(void) {
 		spi_enable(SPI1);
 
 
-		spi_send_lsb_first(SPI1);
+		spi_send_msb_first(SPI1);
 
 #endif /* USE_GPIO_FOR_PLL */
 }
