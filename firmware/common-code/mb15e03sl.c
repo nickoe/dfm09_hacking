@@ -3,11 +3,12 @@
 
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/rcc.h>
+#include <libopencm3/stm32/spi.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #define PLL_DEBUG 1
-
+#define USE_GPIO_FOR_PLL 0
 #if 0
 static void delay(int max) {
     int i;
@@ -27,6 +28,8 @@ typedef union {
 } reg_t;
 
 static void writer(uint32_t input) {
+
+#if USE_GPIO_FOR_PLL
     // Clock (PA5)
     // Data (PA7)
     // LE (PB2)
@@ -88,6 +91,35 @@ static void writer(uint32_t input) {
     NOP_DELAY();
     gpio_clear(GPIOB, GPIO2);
     NOP_DELAY();
+
+#else /* USE_GPIO_FOR_PLL */
+    // LE (PB2)
+    gpio_clear(GPIOB, GPIO2);
+		//spi_enable(SPI1);
+		//spi_send_lsb_first(SPI1);
+
+		uint8_t data[4];
+		data[0] = input & 0x000000FF;
+		data[1] = (input & 0x0000FF00) >> 8;
+		data[2] = (input & 0x00FF0000) >> 16;
+		data[3] = (input & 0xFF000000) >> 24;
+
+    //printf("Tried to send: 0x");
+    for (int i = 0; i <= 3; i++) {
+        uint8_t byte = data[i];
+				spi_send(SPI1, byte);
+				//printf("%02x", byte);
+		}
+	  //printf("\r\n");
+	  /* Wait for transfer finished. */
+		while (SPI_SR(SPI1) & SPI_SR_BSY);
+		//spi_disable(SPI1);
+
+    gpio_set(GPIOB, GPIO2);
+    NOP_DELAY();
+    gpio_clear(GPIOB, GPIO2);
+    NOP_DELAY();
+#endif /* USE_GPIO_FOR_PLL */
 }
 
 /*
@@ -183,11 +215,11 @@ void pll_write(void) {
 
 #if PLL_DEBUG == 1
     printf("Expected init1: 1000000000100001000\r\n");
-    printf("                ");
+    //printf("                ");
 #endif
     writer(init1.whole_reg.whole);
 #if PLL_DEBUG == 1
-    printf("\r\n                ");
+    //printf("\r\n                ");
 #endif
     writer(init2.whole_reg.whole);
 #if PLL_DEBUG == 1
@@ -196,6 +228,7 @@ void pll_write(void) {
 }
 
 void pll_setup(void) {
+#if USE_GPIO_FOR_PLL
     rcc_periph_clock_enable(RCC_GPIOA);
     rcc_periph_clock_enable(RCC_GPIOB);
     rcc_periph_clock_enable(RCC_GPIOC);
@@ -215,4 +248,53 @@ void pll_setup(void) {
     gpio_clear(GPIOA, GPIO5);
     gpio_clear(GPIOA, GPIO7);
     gpio_clear(GPIOB, GPIO2);
+#else  /* USE_GPIO_FOR_PLL */
+    rcc_periph_clock_enable(RCC_GPIOA);
+    rcc_periph_clock_enable(RCC_GPIOB);
+    rcc_periph_clock_enable(RCC_GPIOC);
+		rcc_periph_clock_enable(RCC_SPI1);
+    // Clock (PA5)
+    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL,
+                  GPIO5);
+    // Data (PA7)
+    gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ, GPIO_CNF_OUTPUT_ALTFN_PUSHPULL,
+                  GPIO7);
+
+    // LE (PB2)
+    gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,
+                  GPIO2);
+    // LOCK OK (PC15)
+    gpio_set_mode(GPIOC, GPIO_MODE_INPUT, GPIO_CNF_INPUT_FLOAT, GPIO15);
+
+    spi_reset(SPI1);
+
+    /* Set up SPI in Master mode with:
+     * Clock baud rate: 1/64 of peripheral clock frequency
+     * Clock polarity: Idle High
+     * Clock phase: Data valid on 2nd clock pulse
+     * Data frame format: 8-bit
+     * Frame format: MSB First
+     */
+    spi_init_master(SPI1, SPI_CR1_BAUDRATE_FPCLK_DIV_8, SPI_CR1_CPOL_CLK_TO_0_WHEN_IDLE,
+                    SPI_CR1_CPHA_CLK_TRANSITION_1, SPI_CR1_DFF_8BIT, SPI_CR1_MSBFIRST);
+
+
+		/*
+		 * Set NSS management to software.
+		 *
+		 * Note:
+		 * Setting nss high is very important, even if we are controlling the GPIO
+		 * ourselves this bit needs to be at least set to 1, otherwise the spi
+		 * peripheral will not send any data out.
+		 */
+		spi_enable_software_slave_management(SPI1);
+		spi_set_nss_high(SPI1);
+
+		/* Enable SPI1 periph. */
+		spi_enable(SPI1);
+
+
+		spi_send_lsb_first(SPI1);
+
+#endif /* USE_GPIO_FOR_PLL */
 }

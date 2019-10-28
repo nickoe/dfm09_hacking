@@ -25,11 +25,11 @@ static void gpio_setup(void) {
     // RF Enable (PB12)
     gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_2_MHZ, GPIO_CNF_OUTPUT_PUSHPULL,
                   GPIO12);
-    gpio_set(GPIOB, GPIO12);
-    //gpio_clear(GPIOB, GPIO12);
+    //gpio_set(GPIOB, GPIO12);
+    gpio_clear(GPIOB, GPIO12);
 
     // 5.120 MHz ref clock for PLL (PB9)
-    gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_50_MHZ,
+    gpio_set_mode(GPIOB, GPIO_MODE_OUTPUT_10_MHZ,
                   GPIO_CNF_OUTPUT_ALTFN_PUSHPULL, GPIO_TIM4_CH4);
 
     rcc_periph_clock_enable(RCC_TIM4);
@@ -87,7 +87,7 @@ int main(void) {
         //gpio_toggle(GPIOA, GPIO4);
         // delay(230);
 #endif
-#if 1
+#if 0
         for ( i =0 ; i < 6; i++) {
             gpio_toggle(GPIOA, GPIO4);
         }
