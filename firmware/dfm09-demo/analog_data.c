@@ -3,18 +3,18 @@
 
 
 // symbols per bit
-uint8_t spb = 8;
+uint8_t spb = 16;
 
-#define KERNEL_SIZE 5
 
+//#define KERNEL_SIZE 5
 // Gaussian kernel, normalized to 2^12
-uint16_t kernel[KERNEL_SIZE] = {223, 1000, 1649, 1000, 223};
+//uint16_t kernel[KERNEL_SIZE] = {223, 1000, 1649, 1000, 223};
+#define KERNEL_SIZE 17
+uint16_t kernel[KERNEL_SIZE] = {0, 1, 9, 35, 110, 265, 495, 721, 817, 721, 495, 265, 110, 35, 9, 1, 0};
 
 // Ring buffer and index
 ring_buffer[KERNEL_SIZE] = {0};
 rb_idx = 0;
-
-int32_t *coeffp; // pointer to coefficients
 
 static void generate_ref_samples(void) {
   uint8_t data[] = "UUUUUUUUUU OZ3RF OZ3RF TEST TEST TEST";
@@ -54,9 +54,9 @@ static void generate_ref_samples(void) {
         ring_buffer[rb_idx] = out;
         rb_idx = (rb_idx + 1) % KERNEL_SIZE;
         acc = 0;
-        coeffp = kernel;
         for (int k=0; k < KERNEL_SIZE; k++) {
-          acc += (uint16_t)(*coeffp++) * (uint16_t)(ring_buffer[(k+rb_idx)%KERNEL_SIZE]);
+          printf("coeff[%d] = %d\n", k, kernel[k]);
+          acc += kernel[k] * (uint16_t)(ring_buffer[(k+rb_idx)%KERNEL_SIZE]);
         }
         fprintf(fp_f, "%d\n", acc);
       }
